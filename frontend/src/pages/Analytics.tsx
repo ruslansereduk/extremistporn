@@ -1,50 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { FileText, Calendar, Database, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { fetchStats, fetchSources, fetchTopSearches, fetchRecentMaterials, fetchTimeline, fetchVisitorStats } from '../lib/api';
 import StatsCard from '../components/StatsCard';
+import { Database, FileText, Search, Clock, Users, Smartphone, Globe } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 
-interface AnalyticsStats {
-    totalMaterials: number;
-    totalSources: number;
-    processedFiles: number;
-    lastUpdate: {
-        date: string;
-        recordsAdded: number;
-    } | null;
-    searches: {
-        total: number;
+interface VisitorStats {
+    uniqueVisitors: {
         today: number;
+        week: number;
     };
+    devices: Array<{ device_type: string; count: number }>;
+    referrers: Array<{ source: string; count: number }>;
 }
 
-interface Source {
-    filename: string;
-    file_hash: string;
-    processed_at: string;
-    records_count: number;
-    currentCount: number;
-}
-
-interface TopSearch {
-    query: string;
-    count: number;
-    last_searched: string;
-}
-
-interface TimelineEntry {
-    year: string;
-    count: number;
-}
-
-const Analytics: React.FC = () => {
-    const [stats, setStats] = useState<AnalyticsStats | null>(null);
-    const [sources, setSources] = useState<Source[]>([]);
-    const [topSearches, setTopSearches] = useState<TopSearch[]>([]);
-    const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
+export default function Analytics() {
+    const [stats, setStats] = useState<any>(null);
+    const [sources, setSources] = useState<any[]>([]);
+    const [topSearches, setTopSearches] = useState<any[]>([]);
+    const [recent, setRecent] = useState<any[]>([]);
+    const [timeline, setTimeline] = useState<any[]>([]);
+    const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchAnalytics();
         const loadData = async () => {
             try {
                 const [statsData, sourcesData, searchesData, recentData, timelineData, visitorsData] = await Promise.all([
@@ -180,81 +158,71 @@ const Analytics: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Top Searches */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <div className="p-6">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-                            <Search className="w-5 h-5" />
-                            Популярные поиски
-                        </h2>
-                        <div className="space-y-3">
-                            {loading ? (
-                                <p className="text-center text-gray-500 py-8">Загрузка...</p>
-                            ) : topSearches.length === 0 ? (
-                                <p className="text-center text-gray-500 py-8">Нет данных</p>
-                            ) : (
-                                topSearches.map((search, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded">
-                                        <div className="flex-1">
-                                            <p className="text-gray-900 dark:text-white font-medium">
-                                                {search.query}
-                                            </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                Последний: {new Date(search.last_searched).toLocaleDateString('ru-RU')}
-                                            </p>
-                                        </div>
-                                        <span className="ml-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-sm font-medium">
-                                            {search.count}
-                                        </span>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                {/* Timeline Chart */}
+                <div className="bg-[rgb(var(--bg-primary))] p-6 rounded-xl shadow-lg border border-[rgb(var(--border))] mb-8">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                        <Clock className="h-5 w-5" /> Хронология материалов
+                    </h2>
+                    <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={timeline}>
+                                <XAxis dataKey="year" stroke="rgb(var(--text-secondary))" />
+                                <YAxis stroke="rgb(var(--text-secondary))" />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: 'rgb(var(--bg-secondary))', borderColor: 'rgb(var(--border))' }}
+                                    cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                                />
+                                <Bar dataKey="count" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
-            </div>
 
-            {/* Timeline Chart */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                <div className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
-                        <Calendar className="w-5 h-5" />
-                        Распределение по годам
-                    </h2>
-                    <div className="space-y-3">
-                        {loading ? (
-                            <p className="text-center text-gray-500 py-8">Загрузка...</p>
-                        ) : timeline.length === 0 ? (
-                            <p className="text-center text-gray-500 py-8">Нет данных</p>
-                        ) : (
-                            timeline.map((entry, idx) => {
-                                const maxCount = Math.max(...timeline.map(t => t.count));
-                                const percentage = (entry.count / maxCount) * 100;
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Top Searches */}
+                    <div className="bg-[rgb(var(--bg-primary))] p-6 rounded-xl shadow-lg border border-[rgb(var(--border))]">
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                            <Search className="h-5 w-5" /> Популярные запросы
+                        </h2>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-[rgb(var(--border))]">
+                                        <th className="text-left py-3 px-4 font-medium text-[rgb(var(--text-secondary))]">Запрос</th>
+                                        <th className="text-right py-3 px-4 font-medium text-[rgb(var(--text-secondary))]">Кол-во</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {topSearches.map((search, i) => (
+                                        <tr key={i} className="border-b border-[rgb(var(--border))] hover:bg-[rgb(var(--bg-secondary))]">
+                                            <td className="py-3 px-4 font-medium">{search.query}</td>
+                                            <td className="py-3 px-4 text-right">{search.count}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-                                return (
-                                    <div key={idx} className="flex items-center gap-4">
-                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400 w-16">
-                                            {entry.year}
-                                        </span>
-                                        <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-8 overflow-hidden">
-                                            <div
-                                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-full flex items-center justify-end px-3 transition-all duration-500"
-                                                style={{ width: `${percentage}%` }}
-                                            >
-                                                <span className="text-white text-sm font-medium">
-                                                    {entry.count.toLocaleString()}
-                                                </span>
-                                            </div>
-                                        </div>
+                    {/* Recent Materials */}
+                    <div className="bg-[rgb(var(--bg-primary))] p-6 rounded-xl shadow-lg border border-[rgb(var(--border))]">
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                            <Clock className="h-5 w-5" /> Недавние добавления
+                        </h2>
+                        <div className="space-y-4">
+                            {recent.slice(0, 5).map((item) => (
+                                <div key={item.id} className="p-4 rounded-lg bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border))]">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="text-xs font-mono bg-[rgb(var(--bg-primary))] px-2 py-1 rounded">#{item.id}</span>
                                     </div>
-                                );
-                            })
-                        )}
+                                    <p className="text-sm line-clamp-2 mb-2">{item.content}</p>
+                                    <p className="text-xs text-[rgb(var(--text-secondary))] line-clamp-1">{item.court_decision}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
-};
-
-export default Analytics;
+}

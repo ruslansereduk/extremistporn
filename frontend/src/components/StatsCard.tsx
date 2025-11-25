@@ -5,22 +5,17 @@ interface StatsCardProps {
     title: string;
     value: string | number;
     subtitle?: string;
-    icon?: 'chart' | 'trending' | 'alert';
+    icon?: React.ReactNode;
     loading?: boolean;
 }
 
 const StatsCard: React.FC<StatsCardProps> = ({ title, value, subtitle, icon, loading }) => {
-    const getIcon = () => {
-        switch (icon) {
-            case 'chart':
-                return <BarChart3 className="w-6 h-6 text-blue-500" />;
-            case 'trending':
-                return <TrendingUp className="w-6 h-6 text-green-500" />;
-            case 'alert':
-                return <AlertCircle className="w-6 h-6 text-orange-500" />;
-            default:
-                return null;
+    const renderIcon = () => {
+        if (React.isValidElement(icon)) {
+            return icon;
         }
+        // Fallback for legacy string icons if needed, or just return null
+        return null;
     };
 
     if (loading) {
