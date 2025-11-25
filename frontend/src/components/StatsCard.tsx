@@ -1,5 +1,4 @@
 import React from 'react';
-import { BarChart3, TrendingUp, AlertCircle } from 'lucide-react';
 
 interface StatsCardProps {
     title: string;
@@ -45,7 +44,7 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, subtitle, icon, loa
                 </div>
                 {icon && (
                     <div className="ml-4">
-                        {getIcon()}
+                        {renderIcon()}
                     </div>
                 )}
             </div>
