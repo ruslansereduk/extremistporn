@@ -16,6 +16,34 @@ app.use((req, res, next) => {
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
 
+// Visitor tracking middleware
+const crypto = require('crypto');
+
+app.use((req, res, next) => {
+    // Skip static assets and API calls that shouldn't be tracked as page views
+    // We want to track page loads and main API interactions
+    if (req.path.startsWith('/assets/') ||
+        req.path.startsWith('/favicon') ||
+        req.path.includes('.')) {
+        return next();
+    }
+
+    try {
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        const ipHash = crypto.createHash('sha256').update(ip).digest('hex');
+        const userAgent = req.headers['user-agent'];
+        const referer = req.headers['referer'];
+
+        db.prepare(`
+            INSERT INTO visitor_logs (ip_hash, user_agent, referer, path)
+            VALUES (?, ?, ?, ?)
+        `).run(ipHash, userAgent, referer, req.path);
+    } catch (err) {
+        console.error('Visitor logging error:', err);
+    }
+    next();
+});
+
 // Admin API routes
 const adminRoutes = require('./admin-routes');
 app.use('/api/admin', adminRoutes);

@@ -45,152 +45,134 @@ const Analytics: React.FC = () => {
 
     useEffect(() => {
         fetchAnalytics();
+        const loadData = async () => {
+            try {
+                const [statsData, sourcesData, searchesData, recentData, timelineData, visitorsData] = await Promise.all([
+                    fetchStats(),
+                    fetchSources(),
+                    fetchTopSearches(),
+                    fetchRecentMaterials(),
+                    fetchTimeline(),
+                    fetchVisitorStats()
+                ]);
+
+                setStats(statsData);
+                setSources(sourcesData.sources);
+                setTopSearches(searchesData.topSearches);
+                setRecent(recentData.recent);
+                setTimeline(timelineData.timeline);
+                setVisitorStats(visitorsData);
+            } catch (error) {
+                console.error('Failed to load analytics:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
     }, []);
 
-    const fetchAnalytics = async () => {
-        try {
-            setLoading(true);
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-            // Fetch all analytics data in parallel
-            const [statsRes, sourcesRes, searchesRes, timelineRes] = await Promise.all([
-                fetch('/api/admin/analytics/stats'),
-                fetch('/api/admin/analytics/sources'),
-                fetch('/api/analytics/top-searches'),
-                fetch('/api/admin/analytics/timeline')
-            ]);
-
-            if (!statsRes.ok || !sourcesRes.ok || !searchesRes.ok || !timelineRes.ok) {
-                throw new Error('Failed to fetch analytics data');
-            }
-
-            const [statsData, sourcesData, searchesData, timelineData] = await Promise.all([
-                statsRes.json(),
-                sourcesRes.json(),
-                searchesRes.json(),
-                timelineRes.json()
-            ]);
-
-            setStats(statsData);
-            setSources(sourcesData.sources);
-            setTopSearches(searchesData.topSearches);
-            setTimeline(timelineData.timeline);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load analytics');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('ru-RU', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    if (error) {
+    if (loading) {
         return (
-            <div className="p-8">
-                <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg">
-                    <p className="font-medium">Ошибка загрузки аналитики</p>
-                    <p className="text-sm mt-1">{error}</p>
-                </div>
+            <div className="min-h-screen bg-[rgb(var(--bg-secondary))] p-8 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
             </div>
         );
     }
 
     return (
-        <div className="p-8 max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                    <Database className="w-8 h-8" />
-                    Аналитика
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
-                    Статистика и аналитика базы данных
-                </p>
-            </div>
+        <div className="min-h-screen bg-[rgb(var(--bg-secondary))] p-8 font-sans">
+            <div className="max-w-7xl mx-auto">
+                <h1 className="text-3xl font-bold mb-8 text-[rgb(var(--text-primary))]">Панель администратора</h1>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <StatsCard
-                    title="Всего записей"
-                    value={stats?.totalMaterials || 0}
-                    icon="chart"
-                    loading={loading}
-                />
-                <StatsCard
-                    title="Источников файлов"
-                    value={stats?.processedFiles || 0}
-                    subtitle={`${stats?.totalSources || 0} уникальных`}
-                    icon="chart"
-                    loading={loading}
-                />
-                <StatsCard
-                    title="Всего поисков"
-                    value={stats?.searches.total || 0}
-                    subtitle={`${stats?.searches.today || 0} сегодня`}
-                    icon="trending"
-                    loading={loading}
-                />
-                <StatsCard
-                    title="Последнее обновление"
-                    value={stats?.lastUpdate?.recordsAdded || 0}
-                    subtitle={stats?.lastUpdate ? formatDate(stats.lastUpdate.date) : 'Нет данных'}
-                    icon="alert"
-                    loading={loading}
-                />
-            </div>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <StatsCard
+                        title="Всего материалов"
+                        value={stats?.totalMaterials || 0}
+                        icon={<Database className="h-6 w-6 text-blue-500" />}
+                        subtitle="Записей в базе"
+                    />
+                    <StatsCard
+                        title="Файлов источников"
+                        value={stats?.totalSources || 0}
+                        icon={<FileText className="h-6 w-6 text-green-500" />}
+                        subtitle="Обработано документов"
+                    />
+                    <StatsCard
+                        title="Поисков сегодня"
+                        value={stats?.searches?.today || 0}
+                        icon={<Search className="h-6 w-6 text-purple-500" />}
+                        subtitle={`Всего: ${stats?.searches?.total || 0}`}
+                    />
+                    <StatsCard
+                        title="Посетителей (24ч)"
+                        value={visitorStats?.uniqueVisitors?.today || 0}
+                        icon={<Users className="h-6 w-6 text-orange-500" />}
+                        subtitle={`За неделю: ${visitorStats?.uniqueVisitors?.week || 0}`}
+                    />
+                </div>
 
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                {/* Sources Table */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <div className="p-6">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
-                            <FileText className="w-5 h-5" />
-                            Обработанные файлы
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    {/* Visitor Devices */}
+                    <div className="bg-[rgb(var(--bg-primary))] p-6 rounded-xl shadow-lg border border-[rgb(var(--border))]">
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                            <Smartphone className="h-5 w-5" /> Устройства
+                        </h2>
+                        <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={visitorStats?.devices}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        fill="#8884d8"
+                                        paddingAngle={5}
+                                        dataKey="count"
+                                        nameKey="device_type"
+                                        label
+                                    >
+                                        {visitorStats?.devices.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'rgb(var(--bg-secondary))', borderColor: 'rgb(var(--border))' }}
+                                    />
+                                    <Legend />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Referrers */}
+                    <div className="bg-[rgb(var(--bg-primary))] p-6 rounded-xl shadow-lg border border-[rgb(var(--border))]">
+                        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                            <Globe className="h-5 w-5" /> Источники переходов
                         </h2>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                                        <th className="text-left py-3 px-2 font-medium text-gray-600 dark:text-gray-400">Файл</th>
-                                        <th className="text-right py-3 px-2 font-medium text-gray-600 dark:text-gray-400">Записей</th>
-                                        <th className="text-right py-3 px-2 font-medium text-gray-600 dark:text-gray-400">Дата</th>
+                                    <tr className="border-b border-[rgb(var(--border))]">
+                                        <th className="text-left py-3 px-4 font-medium text-[rgb(var(--text-secondary))]">Источник</th>
+                                        <th className="text-right py-3 px-4 font-medium text-[rgb(var(--text-secondary))]">Визиты</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {loading ? (
-                                        <tr>
-                                            <td colSpan={3} className="py-8 text-center text-gray-500">
-                                                Загрузка...
-                                            </td>
+                                    {visitorStats?.referrers.map((ref, i) => (
+                                        <tr key={i} className="border-b border-[rgb(var(--border))] hover:bg-[rgb(var(--bg-secondary))]">
+                                            <td className="py-3 px-4 font-medium">{ref.source}</td>
+                                            <td className="py-3 px-4 text-right">{ref.count}</td>
                                         </tr>
-                                    ) : sources.length === 0 ? (
+                                    ))}
+                                    {(!visitorStats?.referrers || visitorStats.referrers.length === 0) && (
                                         <tr>
-                                            <td colSpan={3} className="py-8 text-center text-gray-500">
-                                                Нет данных
-                                            </td>
+                                            <td colSpan={2} className="py-4 text-center text-[rgb(var(--text-secondary))]">Нет данных</td>
                                         </tr>
-                                    ) : (
-                                        sources.map((source, idx) => (
-                                            <tr key={idx} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                                <td className="py-3 px-2 text-gray-900 dark:text-white truncate max-w-xs" title={source.filename}>
-                                                    {source.filename.substring(0, 20)}...
-                                                </td>
-                                                <td className="py-3 px-2 text-right text-gray-900 dark:text-white font-mono">
-                                                    {source.currentCount.toLocaleString()}
-                                                </td>
-                                                <td className="py-3 px-2 text-right text-gray-600 dark:text-gray-400 text-xs">
-                                                    {new Date(source.processed_at).toLocaleDateString('ru-RU')}
-                                                </td>
-                                            </tr>
-                                        ))
                                     )}
                                 </tbody>
                             </table>

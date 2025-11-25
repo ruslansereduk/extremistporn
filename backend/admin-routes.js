@@ -162,4 +162,63 @@ router.get('/analytics/timeline', (req, res) => {
     }
 });
 
+// GET /api/admin/analytics/visitors - статистика посещений
+router.get('/analytics/visitors', (req, res) => {
+    try {
+        // Unique visitors (24h)
+        const uniqueToday = db.prepare(`
+            SELECT COUNT(DISTINCT ip_hash) as count 
+            FROM visitor_logs 
+            WHERE timestamp > datetime('now', '-24 hours')
+        `).get();
+
+        // Unique visitors (7d)
+        const uniqueWeek = db.prepare(`
+            SELECT COUNT(DISTINCT ip_hash) as count 
+            FROM visitor_logs 
+            WHERE timestamp > datetime('now', '-7 days')
+        `).get();
+
+        // Device distribution (simplified based on User-Agent)
+        const devices = db.prepare(`
+            SELECT 
+                CASE 
+                    WHEN user_agent LIKE '%Mobile%' OR user_agent LIKE '%Android%' OR user_agent LIKE '%iPhone%' THEN 'Mobile'
+                    ELSE 'Desktop'
+                END as device_type,
+                COUNT(*) as count
+            FROM visitor_logs
+            WHERE timestamp > datetime('now', '-30 days')
+            GROUP BY device_type
+        `).all();
+
+        // Top referrers
+        const referrers = db.prepare(`
+            SELECT 
+                CASE 
+                    WHEN referer IS NULL OR referer = '' THEN 'Direct'
+                    ELSE substr(referer, 0, 40)
+                END as source,
+                COUNT(*) as count
+            FROM visitor_logs
+            WHERE timestamp > datetime('now', '-30 days')
+            GROUP BY source
+            ORDER BY count DESC
+            LIMIT 10
+        `).all();
+
+        res.json({
+            uniqueVisitors: {
+                today: uniqueToday.count,
+                week: uniqueWeek.count
+            },
+            devices,
+            referrers
+        });
+    } catch (err) {
+        console.error('Visitor stats error:', err);
+        res.status(500).json({ error: 'Failed to fetch visitor stats' });
+    }
+});
+
 module.exports = router;

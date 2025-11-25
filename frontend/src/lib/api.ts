@@ -14,6 +14,18 @@ export const fetchStats = async (): Promise<{ total: number }> => {
     return response.json();
 };
 
+export const fetchTimeline = async () => {
+    const response = await fetch(`${API_BASE}/admin/analytics/timeline`);
+    if (!response.ok) throw new Error('Failed to fetch timeline');
+    return response.json();
+};
+
+export const fetchVisitorStats = async () => {
+    const response = await fetch(`${API_BASE}/admin/analytics/visitors`);
+    if (!response.ok) throw new Error('Failed to fetch visitor stats');
+    return response.json();
+};
+
 export async function searchMaterials(query: string) {
     const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
     if (!response.ok) {

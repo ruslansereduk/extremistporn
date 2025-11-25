@@ -13,8 +13,8 @@ const RAILWAY_URL = 'https://extremistporn-production.up.railway.app';
 async function uploadData() {
     console.log('📊 Uploading database to Railway...\n');
 
-    // Get all materials
-    const materials = db.prepare('SELECT content, court_decision, source_file FROM materials WHERE source_file IS NOT NULL').all();
+    // Get ALL materials (not just those with source_file)
+    const materials = db.prepare('SELECT content, court_decision, source_file FROM materials').all();
 
     console.log(`Found ${materials.length} materials to upload`);
 

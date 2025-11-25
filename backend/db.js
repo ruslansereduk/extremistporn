@@ -61,6 +61,17 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS visitor_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip_hash TEXT NOT NULL,
+    user_agent TEXT,
+    referer TEXT,
+    path TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
 // Create processed files tracking table
 db.exec(`
   CREATE TABLE IF NOT EXISTS processed_files (
