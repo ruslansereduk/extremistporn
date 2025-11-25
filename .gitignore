@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+frontend/dist/
+*.log
+
+# Database files (use Railway volume)
+extremist_materials.db
+extremist_materials.db-shm
+extremist_materials.db-wal
+
+# Source documents (too large for git)
+Extrimists/*.doc
+Extrimists/*.xlsx
+
+# Temporary files
+temp_batch/
+temp_update/
+*.tmp
+*.temp
+
+# Conversion outputs
+converted*.txt
+clean_text.txt
+extracted_*.txt
+final_text.txt
+raw_converted.txt
+*.txt
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль материала - Проверка экстремистских материалов</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Вернуться к поиску</a>
+        <div id="profile-content" class="profile-card">
+            <p>Загрузка...</p>
+        </div>
+    </div>
+    <script src="app.js"></script>
+    <script>
+        // Simple inline script to handle profile loading if we don't want to complicate app.js too much,
+        // but sticking to app.js is better for maintainability. 
+        // We'll handle routing in app.js or just check URL params.
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (id) {
+                loadProfile(id);
+            }
+        });
+    </script>
+</body>
+
+</html>
