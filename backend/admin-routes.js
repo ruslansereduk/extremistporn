@@ -3,6 +3,43 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Middleware for JSON parsing
+router.use(express.json({ limit: '50mb' }));
+
+// POST /api/admin/bulk-upload - bulk upload materials
+router.post('/bulk-upload', (req, res) => {
+    try {
+        const { materials } = req.body;
+
+        if (!Array.isArray(materials)) {
+            return res.status(400).json({ error: 'materials must be an array' });
+        }
+
+        const insertStmt = db.prepare('INSERT INTO materials (content, court_decision, source_file) VALUES (?, ?, ?)');
+        const checkStmt = db.prepare('SELECT id FROM materials WHERE content = ? AND court_decision = ? LIMIT 1');
+
+        let inserted = 0;
+        let duplicates = 0;
+
+        db.transaction(() => {
+            for (const item of materials) {
+                const existing = checkStmt.get(item.content, item.court_decision);
+                if (!existing) {
+                    insertStmt.run(item.content, item.court_decision, item.source_file || null);
+                    inserted++;
+                } else {
+                    duplicates++;
+                }
+            }
+        })();
+
+        res.json({ inserted, duplicates, total: materials.length });
+    } catch (error) {
+        console.error('Bulk upload error:', error);
+        res.status(500).json({ error: 'Bulk upload failed' });
+    }
+});
+
 // GET /api/admin/analytics/stats - общая статистика
 router.get('/analytics/stats', (req, res) => {
     try {
