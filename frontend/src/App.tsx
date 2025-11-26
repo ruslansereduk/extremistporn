@@ -180,6 +180,7 @@ function App() {
         <Routes>
             <Route path="/" element={<SearchPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin" element={<Analytics />} />
             <Route path="/admin/analytics" element={<Analytics />} />
         </Routes>
     );
