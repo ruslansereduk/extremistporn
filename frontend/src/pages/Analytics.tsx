@@ -15,7 +15,6 @@ interface VisitorStats {
 
 export default function Analytics() {
     const [stats, setStats] = useState<any>(null);
-    const [sources, setSources] = useState<any[]>([]);
     const [topSearches, setTopSearches] = useState<any[]>([]);
     const [recent, setRecent] = useState<any[]>([]);
     const [timeline, setTimeline] = useState<any[]>([]);
@@ -25,7 +24,7 @@ export default function Analytics() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [statsData, sourcesData, searchesData, recentData, timelineData, visitorsData] = await Promise.all([
+                const [statsData, , searchesData, recentData, timelineData, visitorsData] = await Promise.all([
                     fetchStats(),
                     fetchSources(),
                     fetchTopSearches(),
@@ -35,7 +34,6 @@ export default function Analytics() {
                 ]);
 
                 setStats(statsData);
-                setSources(sourcesData.sources);
                 setTopSearches(searchesData.topSearches);
                 setRecent(recentData.recent);
                 setTimeline(timelineData.timeline);
@@ -114,7 +112,7 @@ export default function Analytics() {
                                         nameKey="device_type"
                                         label
                                     >
-                                        {visitorStats?.devices.map((entry, index) => (
+                                        {visitorStats?.devices.map((_entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
