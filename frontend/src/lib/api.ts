@@ -6,8 +6,8 @@ export async function fetchMaterial(id: string) {
     return await response.json();
 }
 
-export const fetchStats = async (): Promise<{ total: number }> => {
-    const response = await fetch('/api/stats');
+export const fetchStats = async () => {
+    const response = await fetch('/api/admin/analytics/stats');
     if (!response.ok) {
         throw new Error('Failed to fetch stats');
     }
