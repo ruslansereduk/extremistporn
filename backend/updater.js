@@ -5,7 +5,7 @@ const { execSync } = require('child_process');
 const db = require('./db');
 const parser = require('./parser');
 
-const DOC_URL = 'http://mininform.gov.by/upload/iblock/446/r0cgbemn4oriwhjmjepofzez1dxq9ci0.doc'; // Direct .doc file link
+const DOC_URL = 'http://mininform.gov.by/upload/iblock/002/i0lup1njj76z7ozakcjcfvtf9zd5jnxn.doc'; // Updated 27.11.2025
 // Page URL for reference: http://mininform.gov.by/documents/respublikanskiy-spisok-ekstremistskikh-materialov/
 const TEMP_DIR = path.join(__dirname, '..', 'temp_update');
 const DOC_PATH = path.join(TEMP_DIR, 'update.doc');
