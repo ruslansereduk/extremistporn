@@ -34,7 +34,7 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, subtitle, icon, loa
                         {title}
                     </h3>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                        {value.toLocaleString()}
+                        {typeof value === 'number' ? value.toLocaleString() : (value || '0')}
                     </p>
                     {subtitle && (
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">

@@ -136,8 +136,8 @@ function SearchPage() {
             <div className="text-center mb-12">
                 <h1 className="text-4xl font-bold mb-4">Проверка материалов</h1>
                 <p className="text-[rgb(var(--text-secondary))] text-lg mb-2">Поиск по республиканскому списку экстремистских материалов</p>
-                {totalCount !== null && (
-                    <p className="text-[rgb(var(--text-secondary))] text-sm">Всего материалов в базе: <span className="font-semibold">{totalCount.toLocaleString()}</span></p>
+                {totalCount != null && (
+                    <p className="text-[rgb(var(--text-secondary))] text-sm">Всего материалов в базе: <span className="font-semibold">{(totalCount || 0).toLocaleString()}</span></p>
                 )}
             </div>
 
