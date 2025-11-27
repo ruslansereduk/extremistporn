@@ -129,7 +129,8 @@ export default function UpdatesPage() {
         }
     };
 
-    const formatDate = (dateStr: string) => {
+    const formatDate = (dateStr: string | null | undefined) => {
+        if (!dateStr) return 'N/A';
         const date = new Date(dateStr);
         return date.toLocaleString('ru-RU', {
             day: '2-digit',
