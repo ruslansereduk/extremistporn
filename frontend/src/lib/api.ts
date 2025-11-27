@@ -66,3 +66,30 @@ export async function searchMaterials(query: string) {
     const data = await response.json();
     return data.results;
 }
+
+// ========================================
+// Update Management API
+// ========================================
+
+export const triggerUpdate = async () => {
+    const response = await fetch('/api/admin/update/trigger', {
+        method: 'POST'
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to trigger update');
+    }
+    return response.json();
+};
+
+export const fetchUpdateStatus = async () => {
+    const response = await fetch('/api/admin/update/status');
+    if (!response.ok) throw new Error('Failed to fetch update status');
+    return response.json();
+};
+
+export const fetchUpdateHistory = async () => {
+    const response = await fetch('/api/admin/update/history?limit=5');
+    if (!response.ok) throw new Error('Failed to fetch update history');
+    return response.json();
+};

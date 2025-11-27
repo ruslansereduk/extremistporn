@@ -37,7 +37,14 @@ function downloadFile(url, dest) {
 }
 
 async function updateData() {
-    console.log(`[${new Date().toISOString()}] Starting update process...`);
+    const startTime = new Date().toISOString();
+    console.log(`[${startTime}] Starting update process...`);
+
+    // Record update start
+    const statusId = db.prepare(`
+        INSERT INTO update_status (source_id, source_name, status)
+        VALUES (?, ?, ?)
+    `).run('mininform_materials', 'Министерство информации', 'running').lastInsertRowid;
 
     try {
         // 1. Download
@@ -48,10 +55,6 @@ async function updateData() {
         // 2. Convert
         console.log('Converting to text...');
         try {
-            // Use iconv -c to ignore invalid characters, similar to our manual fix
-            // We pipe the file content through iconv
-            // Note: iconv expects input file or stdin. 
-            // Command: iconv -f UTF-16LE -t UTF-8 -c input.doc > output.txt
             execSync(`iconv -f UTF-16LE -t UTF-8 -c "${DOC_PATH}" > "${TXT_PATH}"`);
         } catch (err) {
             console.error('Conversion failed:', err.message);
@@ -67,15 +70,18 @@ async function updateData() {
 
         if (newEntries.length === 0) {
             console.log('No entries parsed. Aborting update.');
+
+            // Update status to error
+            db.prepare(`
+                UPDATE update_status 
+                SET status = 'error', completed_at = CURRENT_TIMESTAMP, error_message = ?
+                WHERE id = ?
+            `).run('No entries parsed from file', statusId);
+
             return;
         }
 
         // 4. Update DB and find new items
-        // We need to compare with existing data.
-        // Strategy: Get all existing content hashes or just content strings.
-        // Since we want to log *new* items, we should check existence before inserting.
-        // However, for performance with 10k items, we can use a Set.
-
         const existingRows = db.prepare('SELECT content FROM materials').all();
         const existingContent = new Set(existingRows.map(r => r.content));
 
@@ -110,17 +116,34 @@ async function updateData() {
             const logContent = newItemsLog.map(i => `[${new Date().toISOString()}] ${i.content} (${i.court_decision})`).join('\n') + '\n';
             fs.appendFileSync(logPath, logContent);
             console.log(`New items logged to ${logPath}`);
+
+            // Update status to success
+            db.prepare(`
+                UPDATE update_status 
+                SET status = 'success', completed_at = CURRENT_TIMESTAMP, items_added = ?, items_total = ?
+                WHERE id = ?
+            `).run(itemsToAdd.length, totalItems, statusId);
         } else {
             console.log('No new items to add.');
-        }
 
-        // Optional: Full sync? 
-        // If we want to remove deleted items, we would need to do a full replace or diff.
-        // The request says "add new materials", implying append-only or sync.
-        // For now, we just add new ones. If the source removes items, we keep them (safer for history).
+            // Update status to success (0 new items)
+            const totalItems = db.prepare('SELECT COUNT(*) as count FROM materials').get().count;
+            db.prepare(`
+                UPDATE update_status 
+                SET status = 'success', completed_at = CURRENT_TIMESTAMP, items_added = 0, items_total = ?
+                WHERE id = ?
+            `).run(totalItems, statusId);
+        }
 
     } catch (err) {
         console.error('Update failed:', err);
+
+        // Update status to error
+        db.prepare(`
+            UPDATE update_status 
+            SET status = 'error', completed_at = CURRENT_TIMESTAMP, error_message = ?
+            WHERE id = ?
+        `).run(err.message, statusId);
     } finally {
         // Cleanup
         if (fs.existsSync(DOC_PATH)) fs.unlinkSync(DOC_PATH);

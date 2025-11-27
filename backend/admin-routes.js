@@ -221,4 +221,83 @@ router.get('/analytics/visitors', (req, res) => {
     }
 });
 
+// ========================================
+// Update Management Endpoints
+// ========================================
+
+// POST /api/admin/update/trigger - Trigger manual update
+router.post('/update/trigger', async (req, res) => {
+    try {
+        // Check if update is already running
+        const running = db.prepare(`
+            SELECT id FROM update_status 
+            WHERE status = 'running' 
+            ORDER BY started_at DESC LIMIT 1
+        `).get();
+
+        if (running) {
+            return res.status(409).json({
+                error: 'Update already in progress',
+                status: 'running'
+            });
+        }
+
+        // Start update in background
+        const { updateData } = require('./updater');
+
+        // Don't await - run in background
+        updateData().catch(err => {
+            console.error('Background update error:', err);
+        });
+
+        res.json({
+            success: true,
+            message: 'Update started',
+            status: 'running'
+        });
+    } catch (error) {
+        console.error('Trigger update error:', error);
+        res.status(500).json({ error: 'Failed to trigger update' });
+    }
+});
+
+// GET /api/admin/update/status - Get current update status
+router.get('/update/status', (req, res) => {
+    try {
+        const current = db.prepare(`
+            SELECT * FROM update_status 
+            ORDER BY started_at DESC LIMIT 1
+        `).get();
+
+        if (!current) {
+            return res.json({
+                status: 'idle',
+                lastUpdate: null
+            });
+        }
+
+        res.json(current);
+    } catch (error) {
+        console.error('Get status error:', error);
+        res.status(500).json({ error: 'Failed to get status' });
+    }
+});
+
+// GET /api/admin/update/history - Get update history
+router.get('/update/history', (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+        const history = db.prepare(`
+            SELECT * FROM update_status 
+            ORDER BY started_at DESC 
+            LIMIT ?
+        `).all(limit);
+
+        res.json({ history });
+    } catch (error) {
+        console.error('Get history error:', error);
+        res.status(500).json({ error: 'Failed to get history' });
+    }
+});
+
 module.exports = router;

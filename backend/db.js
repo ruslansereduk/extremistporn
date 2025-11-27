@@ -72,6 +72,46 @@ db.exec(`
   );
 `);
 
+// Create extremist organizations table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS extremist_organizations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    decision TEXT,
+    date_added DATE DEFAULT CURRENT_DATE,
+    source_file TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Create extremist individuals table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS extremist_individuals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name TEXT NOT NULL,
+    decision TEXT,
+    category TEXT CHECK(category IN ('citizen', 'foreign')),
+    date_added DATE DEFAULT CURRENT_DATE,
+    source_file TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Create update status tracking table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS update_status (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_id TEXT NOT NULL,
+    source_name TEXT,
+    status TEXT NOT NULL CHECK(status IN ('running', 'success', 'error', 'cancelled')),
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
+    items_added INTEGER DEFAULT 0,
+    items_total INTEGER DEFAULT 0,
+    error_message TEXT
+  );
+`);
+
 // Create processed files tracking table
 db.exec(`
   CREATE TABLE IF NOT EXISTS processed_files (

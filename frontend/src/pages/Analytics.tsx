@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetchStats, fetchSources, fetchTopSearches, fetchRecentMaterials, fetchTimeline, fetchVisitorStats } from '../lib/api';
 import StatsCard from '../components/StatsCard';
+import DataManagement from '../components/DataManagement';
 import { Database, FileText, Search, Clock, Users, Smartphone, Globe } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 
@@ -89,6 +90,11 @@ export default function Analytics() {
                         icon={<Users className="h-6 w-6 text-orange-500" />}
                         subtitle={`За неделю: ${visitorStats?.uniqueVisitors?.week || 0}`}
                     />
+                </div>
+
+                {/* Data Management */}
+                <div className="mb-8">
+                    <DataManagement />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -221,6 +227,6 @@ export default function Analytics() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
