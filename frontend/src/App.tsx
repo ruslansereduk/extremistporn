@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Dashboard } from './pages/Dashboard';
 import Analytics from './pages/Analytics';
+import UpdatesPage from './pages/UpdatesPage';
 import { fetchMaterial, searchMaterials, fetchStats } from './lib/api';
 
 interface Material {
@@ -182,6 +183,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Analytics />} />
             <Route path="/admin/analytics" element={<Analytics />} />
+            <Route path="/admin/updates" element={<UpdatesPage />} />
         </Routes>
     );
 }

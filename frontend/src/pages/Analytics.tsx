@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchStats, fetchSources, fetchTopSearches, fetchRecentMaterials, fetchTimeline, fetchVisitorStats } from '../lib/api';
 import StatsCard from '../components/StatsCard';
-import DataManagement from '../components/DataManagement';
 import { Database, FileText, Search, Clock, Users, Smartphone, Globe } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 
@@ -92,9 +91,24 @@ export default function Analytics() {
                     />
                 </div>
 
-                {/* Data Management */}
+                {/* Link to Updates Page */}
                 <div className="mb-8">
-                    <DataManagement />
+                    <div className="bg-[rgb(var(--bg-primary))] rounded-xl shadow-lg border border-[rgb(var(--border))] p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xl font-bold mb-2">🔄 Управление обновлениями</h2>
+                                <p className="text-[rgb(var(--text-secondary))]">
+                                    Обновление данных из государственных источников
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => window.location.href = '/admin/updates'}
+                                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                            >
+                                Открыть →
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

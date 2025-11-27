@@ -5,7 +5,8 @@ const { execSync } = require('child_process');
 const db = require('./db');
 const parser = require('./parser');
 
-const DOC_URL = 'http://mininform.gov.by/upload/iblock/446/r0cgbemn4oriwhjmjepofzez1dxq9ci0.doc';
+const DOC_URL = 'http://mininform.gov.by/upload/iblock/446/r0cgbemn4oriwhjmjepofzez1dxq9ci0.doc'; // Direct .doc file link
+// Page URL for reference: http://mininform.gov.by/documents/respublikanskiy-spisok-ekstremistskikh-materialov/
 const TEMP_DIR = path.join(__dirname, '..', 'temp_update');
 const DOC_PATH = path.join(TEMP_DIR, 'update.doc');
 const TXT_PATH = path.join(TEMP_DIR, 'update.txt');
@@ -117,12 +118,15 @@ async function updateData() {
             fs.appendFileSync(logPath, logContent);
             console.log(`New items logged to ${logPath}`);
 
+            // Store new items as JSON in update_status for display
+            const newItemsJson = JSON.stringify(newItemsLog.slice(0, 50)); // Store first 50 only
+
             // Update status to success
             db.prepare(`
                 UPDATE update_status 
-                SET status = 'success', completed_at = CURRENT_TIMESTAMP, items_added = ?, items_total = ?
+                SET status = 'success', completed_at = CURRENT_TIMESTAMP, items_added = ?, items_total = ?, error_message = ?
                 WHERE id = ?
-            `).run(itemsToAdd.length, totalItems, statusId);
+            `).run(itemsToAdd.length, totalItems, newItemsJson, statusId);
         } else {
             console.log('No new items to add.');
 
@@ -132,7 +136,7 @@ async function updateData() {
                 UPDATE update_status 
                 SET status = 'success', completed_at = CURRENT_TIMESTAMP, items_added = 0, items_total = ?
                 WHERE id = ?
-            `).run(totalItems, statusId);
+           `).run(totalItems, statusId);
         }
 
     } catch (err) {

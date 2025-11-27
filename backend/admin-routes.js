@@ -300,4 +300,32 @@ router.get('/update/history', (req, res) => {
     }
 });
 
+// POST /api/admin/update/cancel - Cancel or reset stuck update
+router.post('/update/cancel', (req, res) => {
+    try {
+        // Find running update
+        const running = db.prepare(`
+            SELECT id FROM update_status 
+            WHERE status = 'running' 
+            ORDER BY started_at DESC LIMIT 1
+        `).get();
+
+        if (!running) {
+            return res.json({ message: 'No running update to cancel' });
+        }
+
+        // Mark as cancelled
+        db.prepare(`
+            UPDATE update_status 
+            SET status = 'cancelled', completed_at = CURRENT_TIMESTAMP, error_message = 'Cancelled by user'
+            WHERE id = ?
+        `).run(running.id);
+
+        res.json({ success: true, message: 'Update cancelled' });
+    } catch (error) {
+        console.error('Cancel update error:', error);
+        res.status(500).json({ error: 'Failed to cancel update' });
+    }
+});
+
 module.exports = router;
