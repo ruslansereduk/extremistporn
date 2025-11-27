@@ -28,7 +28,8 @@ export function LastUpdate() {
         return <div className="p-4">Загрузка...</div>;
     }
 
-    const formatDate = (timestamp: string) => {
+    const formatDate = (timestamp: string | null | undefined) => {
+        if (!timestamp) return 'N/A';
         const date = new Date(timestamp);
         return date.toLocaleString('ru-RU', {
             year: 'numeric',
@@ -59,11 +60,11 @@ export function LastUpdate() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-[rgb(var(--bg-secondary))] p-4 rounded-lg">
                             <p className="text-sm text-[rgb(var(--text-secondary))]">Добавлено</p>
-                            <p className="text-2xl font-bold text-[rgb(var(--accent))]">{updateInfo.items_added}</p>
+                            <p className="text-2xl font-bold text-[rgb(var(--accent))]">{updateInfo.items_added || 0}</p>
                         </div>
                         <div className="bg-[rgb(var(--bg-secondary))] p-4 rounded-lg">
                             <p className="text-sm text-[rgb(var(--text-secondary))]">Всего материалов</p>
-                            <p className="text-2xl font-bold">{updateInfo.total_items.toLocaleString()}</p>
+                            <p className="text-2xl font-bold">{(updateInfo.total_items || 0).toLocaleString()}</p>
                         </div>
                     </div>
                 </div>

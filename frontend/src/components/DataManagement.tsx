@@ -83,7 +83,8 @@ export default function DataManagement() {
         }
     };
 
-    const formatDate = (dateStr: string) => {
+    const formatDate = (dateStr: string | null | undefined) => {
+        if (!dateStr) return 'N/A';
         const date = new Date(dateStr);
         return date.toLocaleString('ru-RU', {
             day: '2-digit',
@@ -133,8 +134,8 @@ export default function DataManagement() {
                 onClick={handleTriggerUpdate}
                 disabled={updating}
                 className={`w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${updating
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
                     }`}
             >
                 <RefreshCw className={`h-5 w-5 ${updating ? 'animate-spin' : ''}`} />
