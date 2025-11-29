@@ -5,33 +5,82 @@ const { execSync } = require('child_process');
 const db = require('./db');
 const parser = require('./parser');
 
-const DOC_URL = 'http://mininform.gov.by/upload/iblock/002/i0lup1njj76z7ozakcjcfvtf9zd5jnxn.doc'; // Updated 27.11.2025
+const DOC_URL = 'http://mininform.gov.by/upload/iblock/a79/8vur6a037qmr1xsia2prgej39ljx9rwz.doc'; // Updated 28.11.2025
 // Page URL for reference: http://mininform.gov.by/documents/respublikanskiy-spisok-ekstremistskikh-materialov/
 const TEMP_DIR = path.join(__dirname, '..', 'temp_update');
 const DOC_PATH = path.join(TEMP_DIR, 'update.doc');
 const TXT_PATH = path.join(TEMP_DIR, 'update.txt');
 
-// Ensure temp dir exists
-if (!fs.existsSync(TEMP_DIR)) {
-    fs.mkdirSync(TEMP_DIR);
-}
-
 function downloadFile(url, dest) {
     return new Promise((resolve, reject) => {
-        const file = fs.createWriteStream(dest);
-        // Handle http/https based on protocol, but URL is http
+        // Ensure directory exists before any operations
+        const destDir = path.dirname(dest);
+        if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
+            console.log(`Created temp directory: ${destDir}`);
+        }
+
+        // Handle http/https based on protocol
         const http = require('http');
-        http.get(url, (response) => {
+
+        const options = {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; ExtremistCheckBot/1.0; +https://extremistporn.com)'
+            },
+            timeout: 60000 // 60 second timeout for large file
+        };
+
+        console.log(`Attempting to download from: ${url}`);
+        const request = http.get(url, options, (response) => {
+            console.log(`Response status: ${response.statusCode}`);
+
+            // Handle redirects
+            if (response.statusCode === 301 || response.statusCode === 302) {
+                console.log(`Redirected to: ${response.headers.location}`);
+                return downloadFile(response.headers.location, dest).then(resolve).catch(reject);
+            }
+
             if (response.statusCode !== 200) {
-                reject(new Error(`Failed to download file: ${response.statusCode}`));
+                const error = new Error(`Failed to download file: ${response.statusCode}`);
+                reject(error);
                 return;
             }
-            response.pipe(file);
-            file.on('finish', () => {
-                file.close(resolve);
+
+            // Only create WriteStream after confirming successful response
+            const file = fs.createWriteStream(dest);
+
+            file.on('error', (err) => {
+                console.error('WriteStream error:', err);
+                reject(err);
             });
-        }).on('error', (err) => {
-            fs.unlink(dest, () => { });
+
+            response.pipe(file);
+
+            file.on('finish', () => {
+                file.close((err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        console.log(`File downloaded successfully: ${dest}`);
+                        resolve();
+                    }
+                });
+            });
+        });
+
+        request.on('timeout', () => {
+            request.destroy();
+            const error = new Error('Download timeout - file too large or connection too slow');
+            console.error('HTTP request timeout:', error);
+            reject(error);
+        });
+
+        request.on('error', (err) => {
+            console.error('HTTP request error:', err);
+            // Clean up partial file if it exists
+            if (fs.existsSync(dest)) {
+                fs.unlink(dest, () => { });
+            }
             reject(err);
         });
     });

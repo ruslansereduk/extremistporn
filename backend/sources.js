@@ -9,7 +9,7 @@ module.exports = {
             id: 'mininform_materials',
             name: 'Министерство информации - Список материалов',
             pageUrl: 'http://mininform.gov.by/documents/respublikanskiy-spisok-ekstremistskikh-materialov/',
-            url: 'http://mininform.gov.by/upload/iblock/002/i0lup1njj76z7ozakcjcfvtf9zd5jnxn.doc',
+            url: 'http://mininform.gov.by/upload/iblock/a79/8vur6a037qmr1xsia2prgej39ljx9rwz.doc',
             type: 'doc',
             parser: 'materials',
             enabled: true
