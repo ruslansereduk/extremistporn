@@ -104,8 +104,18 @@ async function updateData() {
 
         // 2. Convert
         console.log('Converting to text...');
+        const os = require('os');
         try {
-            execSync(`iconv -f UTF-16LE -t UTF-8 -c "${DOC_PATH}" > "${TXT_PATH}"`);
+            if (os.platform() === 'darwin') {
+                // macOS has built-in textutil
+                console.log('Using textutil (macOS)...');
+                execSync(`textutil -convert txt -encoding UTF-8 "${DOC_PATH}" -output "${TXT_PATH}"`);
+            } else {
+                // Linux/Production needs catdoc (installed via nixpacks)
+                console.log('Using catdoc (Linux)...');
+                // -w disables word wrapping, -d utf-8 sets output encoding, -s cp1251 sets source encoding
+                execSync(`catdoc -w -s cp1251 -d utf-8 "${DOC_PATH}" > "${TXT_PATH}"`);
+            }
         } catch (err) {
             console.error('Conversion failed:', err.message);
             throw err;
